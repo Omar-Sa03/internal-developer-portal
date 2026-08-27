@@ -1,0 +1,11 @@
+apiVersion: v2
+
+name: {{ values.service_name }}
+
+description: Helm chart for {{ values.service_name }}
+
+type: application
+
+version: 0.1.0
+
+appVersion: "1.0.0"

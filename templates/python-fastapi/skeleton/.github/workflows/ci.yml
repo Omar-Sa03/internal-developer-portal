@@ -1,0 +1,144 @@
+{% raw %}
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest httpx
+
+      - name: Run tests
+        run: pytest -v
+
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Ruff
+        uses: astral-sh/ruff-action@v4.1.0
+        with:
+          src: "."
+
+
+  filesystem-scan:
+    name: Filesystem Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Trivy filesystem scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "0"
+
+
+  build-and-publish:
+    name: Build and Publish
+    needs:
+      - test
+      - lint
+      - filesystem-scan
+
+    # Only publish images and update GitOps manifests from main.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set lower case owner name
+        run: |
+          echo "OWNER_LC=${OWNER,,}" >> "${GITHUB_ENV}"
+        env:
+          OWNER: ${{ github.actor }}
+
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: |
+            ghcr.io/${{ env.OWNER_LC }}/${{ github.event.repository.name }}:${{ github.sha }}
+
+      - name: Scan container image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ghcr.io/${{ env.OWNER_LC }}/${{ github.event.repository.name }}:${{ github.sha }}
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"
+
+      - name: Push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ env.OWNER_LC }}/${{ github.event.repository.name }}:${{ github.sha }}
+            ghcr.io/${{ env.OWNER_LC }}/${{ github.event.repository.name }}:dev
+            ghcr.io/${{ env.OWNER_LC }}/${{ github.event.repository.name }}:latest
+
+      - name: Update image tag
+        run: |
+          yq e '.image.tag = "${{ github.sha }}"' -i helm/service/values.yaml
+
+      - name: Commit updated tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add helm/service/values.yaml
+
+          git commit -m "chore: update image tag to ${{ github.sha }}" || exit 0
+
+          git push
+{% endraw %}
