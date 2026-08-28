@@ -1,12 +1,12 @@
-# {{ values.service_name }}
+# ${{ values.service_name }}
 
 FastAPI service generated from the Internal Developer Platform Golden Path.
 
 ## Service Information
 
-- **Service:** {{ values.service_name }}
-- **Team:** {{ values.team }}
-- **Environment:** {{ values.environment }}
+- **Service:** ${{ values.service_name }}
+- **Team:** ${{ values.team }}
+- **Environment:** ${{ values.environment }}
 
 ## Development
 
@@ -30,9 +30,9 @@ Build and run locally with Docker:
 
 ```bash
 # Build
-docker build -t {{ values.service_name }} .
+docker build -t ${{ values.service_name }} .
 
 # Run
-docker run -p 8000:8000 {{ values.service_name }}
+docker run -p 8000:8000 ${{ values.service_name }}
 ```
  

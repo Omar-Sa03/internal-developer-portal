@@ -14,8 +14,8 @@ def test_root():
 
     data = response.json()
 
-    assert data["service"] == "{{ values.service_name }}"
-    assert data["environment"] == "{{ values.environment }}"
+    assert data["service"] == "${{ values.service_name }}"
+    assert data["environment"] == "${{ values.environment }}"
     assert data["status"] == "healthy"
 
 

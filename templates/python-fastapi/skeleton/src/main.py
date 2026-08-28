@@ -1,13 +1,13 @@
 from fastapi import FastAPI
 
-app = FastAPI(title="{{ values.service_name }}")
+app = FastAPI(title="${{ values.service_name }}")
 
 
 @app.get("/")
 def root():
     return {
-        "service": "{{ values.service_name }}",
-        "environment": "{{ values.environment }}",
+        "service": "${{ values.service_name }}",
+        "environment": "${{ values.environment }}",
         "status": "healthy",
     }
 

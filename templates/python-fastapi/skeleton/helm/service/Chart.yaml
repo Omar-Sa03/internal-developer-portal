@@ -1,8 +1,8 @@
 apiVersion: v2
 
-name: {{ values.service_name }}
+name: ${{ values.service_name }}
 
-description: Helm chart for {{ values.service_name }}
+description: Helm chart for ${{ values.service_name }}
 
 type: application
 

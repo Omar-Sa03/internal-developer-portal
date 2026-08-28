@@ -105,7 +105,7 @@ backend:
   # information on the format
   # auth:
   #   keys:
-  #     - secret: ${BACKEND_SECRET}
+  #     - secret: development-secret-key-1234567890
   baseUrl: http://localhost:7007
   listen:
     port: 7007
@@ -188,11 +188,13 @@ catalog:
     entityFilename: catalog-info.yaml
     pullRequestBranchName: backstage-integration
   rules:
-    - allow: [Component, System, API, Resource, Location]
+    - allow: [Component, System, API, Resource, Location, Template]
   locations:
     # Local example data, file locations are relative to the backend process, typically `packages/backend`
     - type: file
-      target: ./templates/python-fastapi/template.yaml
+      target: ../../templates/python-fastapi/template.yaml
+      rules:
+        - allow: [Template]
 
     # Local example template
     - type: file
