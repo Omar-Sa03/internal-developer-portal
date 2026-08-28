@@ -69,4 +69,6 @@ backend.add(import('@backstage/plugin-signals-backend'));
 // mcp actions plugin
 backend.add(import('@backstage/plugin-mcp-actions-backend'));
 
+backend.add(import('@internal/backstage-plugin-scaffolder-backend-module-1'));
+backend.add(import('@internal/backstage-plugin-scaffolder-backend-module-argocd'));
 backend.start();
