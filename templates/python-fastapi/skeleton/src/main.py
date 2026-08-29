@@ -1,23 +1,60 @@
+from time import perf_counter
+
 from fastapi import FastAPI, Response
 from prometheus_client import (
     CONTENT_TYPE_LATEST,
     Counter,
+    Histogram,
     generate_latest,
 )
 
 app = FastAPI(title="${{ values.service_name }}")
 
+
 REQUEST_COUNT = Counter(
-    "${{ values.service_name | replace('-', '_') }}_requests_total",
+    "http_requests_total",
     "Total number of HTTP requests",
+    ["service", "method", "path", "status"],
+)
+
+REQUEST_LATENCY = Histogram(
+    "http_request_duration_seconds",
+    "HTTP request latency in seconds",
+    ["service", "method", "path"],
 )
 
 
 @app.middleware("http")
-async def count_requests(request, call_next):
-    response = await call_next(request)
+async def metrics_middleware(request, call_next):
+    start = perf_counter()
 
-    REQUEST_COUNT.inc()
+    try:
+        response = await call_next(request)
+
+    except Exception:
+        REQUEST_COUNT.labels(
+            "${{ values.service_name }}",
+            request.method,
+            request.url.path,
+            "500",
+        ).inc()
+
+        raise
+
+    duration = perf_counter() - start
+
+    REQUEST_COUNT.labels(
+        "${{ values.service_name }}",
+        request.method,
+        request.url.path,
+        str(response.status_code),
+    ).inc()
+
+    REQUEST_LATENCY.labels(
+        "${{ values.service_name }}",
+        request.method,
+        request.url.path,
+    ).observe(duration)
 
     return response
 

@@ -1,8 +1,7 @@
-# pyrefly: ignore [missing-import]
 from fastapi.testclient import TestClient
 
-# pyrefly: ignore [missing-import]
 from src.main import app
+
 
 client = TestClient(app)
 
@@ -25,8 +24,10 @@ def test_health():
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
 
+
 def test_metrics():
     response = client.get("/metrics")
 
     assert response.status_code == 200
-    assert "requests_total" in response.text
+    assert "http_requests_total" in response.text
+    assert "http_request_duration_seconds" in response.text

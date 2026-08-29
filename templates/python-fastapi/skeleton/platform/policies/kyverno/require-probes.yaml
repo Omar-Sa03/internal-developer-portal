@@ -1,0 +1,55 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+
+metadata:
+  name: require-health-probes
+
+  annotations:
+    policies.kyverno.io/title: Require Health Probes
+    policies.kyverno.io/category: Platform Reliability
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: Pod
+
+spec:
+  background: true
+
+  rules:
+
+    - name: require-readiness-probe
+
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+
+      validate:
+        failureAction: Audit
+
+        message: >-
+          Every container must define a readiness probe.
+
+        pattern:
+          spec:
+            containers:
+              - readinessProbe: {}
+
+
+    - name: require-liveness-probe
+
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+
+      validate:
+        failureAction: Audit
+
+        message: >-
+          Every container must define a liveness probe.
+
+        pattern:
+          spec:
+            containers:
+              - livenessProbe: {}

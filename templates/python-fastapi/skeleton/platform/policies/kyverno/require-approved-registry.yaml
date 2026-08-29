@@ -1,0 +1,35 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+
+metadata:
+  name: require-approved-registry
+
+  annotations:
+    policies.kyverno.io/title: Require Approved Container Registry
+    policies.kyverno.io/category: Supply Chain Security
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: Pod
+
+spec:
+  background: true
+
+  rules:
+
+    - name: check-container-registry
+
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+
+      validate:
+        failureAction: Audit
+
+        message: >-
+          Images must be pulled from the approved GitHub Container Registry.
+
+        pattern:
+          spec:
+            containers:
+              - image: "ghcr.io/omar-sa03/*"

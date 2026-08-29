@@ -1,9 +1,6 @@
 import { createTemplateAction } from '@backstage/plugin-scaffolder-node';
 import { z } from 'zod';
-import { execFile } from 'child_process';
-import { promisify } from 'util';
 
-const execFileAsync = promisify(execFile);
 
 export const argoCdCreateApplication = () =>
   createTemplateAction({
@@ -18,7 +15,7 @@ export const argoCdCreateApplication = () =>
         repoUrl: z.string().url(),
         path: z.string().default('helm/service'),
         namespace: z.string(),
-      }),
+      }) as any,
     },
 
     async handler(ctx) {
@@ -55,13 +52,15 @@ spec:
         `Creating Argo CD Application '${name}'`,
       );
 
-      await execFileAsync(
-        'kubectl',
-        ['apply', '-f', '-'],
-        {
-          input: manifest,
-        },
-      );
+      await new Promise<void>((resolve, reject) => {
+        const child = require('child_process').spawn('kubectl', ['apply', '-f', '-']);
+        child.on('close', (code: number) => {
+          if (code === 0) resolve();
+          else reject(new Error(`kubectl exited with code ${code}`));
+        });
+        child.stdin.write(manifest);
+        child.stdin.end();
+      });
 
       ctx.output('applicationName', name);
       ctx.output(
