@@ -1,0 +1,38 @@
+{% raw %}
+name: Expire stale previews
+
+# Preview environments are driven by the "preview" label (see the platform's
+# previews ApplicationSet). Removing the label from inactive PRs lets Argo CD
+# tear the environment down, so cleanup stays declarative.
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+    inputs:
+      max_idle_hours:
+        description: Remove previews from PRs idle for longer than this
+        default: "72"
+
+permissions:
+  pull-requests: write
+
+jobs:
+  expire:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Remove preview label from idle pull requests
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MAX_IDLE_HOURS: ${{ inputs.max_idle_hours || '72' }}
+        run: |
+          max_idle_seconds=$(( MAX_IDLE_HOURS * 3600 ))
+          gh pr list --repo "${GITHUB_REPOSITORY}" --state open --label preview \
+            --json number,updatedAt \
+            --jq ".[] | select((now - (.updatedAt | fromdateiso8601)) > ${max_idle_seconds}) | .number" \
+          | while read -r pr; do
+              echo "Expiring preview for #${pr}"
+              gh pr edit "${pr}" --repo "${GITHUB_REPOSITORY}" --remove-label preview
+              gh pr comment "${pr}" --repo "${GITHUB_REPOSITORY}" --body \
+                "Preview environment removed after ${MAX_IDLE_HOURS}h without activity. Add the \`preview\` label again to recreate it."
+            done
+{% endraw %}

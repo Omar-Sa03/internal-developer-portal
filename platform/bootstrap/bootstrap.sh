@@ -35,6 +35,17 @@ helm upgrade --install argocd argo/argo-cd \
   --values "$SCRIPT_DIR/argocd-values.yaml" \
   --wait
 
+if [[ -n "${GITHUB_TOKEN:-}" ]]; then
+  echo "Storing GitHub token for the preview ApplicationSet"
+  kubectl -n argocd create secret generic github-token \
+    --from-literal=token="$GITHUB_TOKEN" \
+    --dry-run=client -o yaml \
+    | kubectl label --local -f - argocd.argoproj.io/secret-type=scm-creds -o yaml \
+    | kubectl apply -f -
+else
+  echo "GITHUB_TOKEN not set: PR preview environments stay disabled" >&2
+fi
+
 echo "Applying platform app-of-apps"
 kubectl apply -f "$SCRIPT_DIR/../argocd/root.yaml"
 

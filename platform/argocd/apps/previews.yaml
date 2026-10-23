@@ -1,0 +1,86 @@
+# One Argo CD Application per open pull request labelled "preview", across
+# every repository in the org tagged with the "idp-service" topic.
+# Closing the PR or removing the label deletes the Application, and the
+# resources finalizer removes everything it deployed.
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: previews
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ['missingkey=error']
+  generators:
+    - matrix:
+        generators:
+          - scmProvider:
+              github:
+                organization: internal-developer-portal26
+                tokenRef:
+                  secretName: github-token
+                  key: token
+              filters:
+                - labelMatch: '^idp-service$'
+              requeueAfterSeconds: 300
+          - pullRequest:
+              github:
+                owner: '{{ .organization }}'
+                repo: '{{ .repository }}'
+                labels:
+                  - preview
+                tokenRef:
+                  secretName: github-token
+                  key: token
+              requeueAfterSeconds: 60
+  template:
+    metadata:
+      name: '{{ .repository }}-pr-{{ .number }}'
+      labels:
+        idp.io/preview-of: '{{ .repository }}'
+        idp.io/pr-number: '{{ .number }}'
+      annotations:
+        idp.io/preview-url: 'http://{{ .repository }}-pr-{{ .number }}.localtest.me:8080'
+        idp.io/pull-request-url: 'https://github.com/{{ .organization }}/{{ .repository }}/pull/{{ .number }}'
+        idp.io/branch: '{{ .branch }}'
+      finalizers:
+        - resources-finalizer.argocd.argoproj.io
+    spec:
+      project: idp-previews
+      source:
+        repoURL: '{{ .url }}'
+        targetRevision: '{{ .head_sha }}'
+        path: helm/service
+        helm:
+          valuesObject:
+            preview:
+              enabled: true
+            image:
+              # Built and pushed by the service's CI for labelled PRs.
+              tag: 'pr-{{ .head_sha }}'
+              pullPolicy: Always
+            ingress:
+              enabled: true
+              host: '{{ .repository }}-pr-{{ .number }}.localtest.me'
+            metrics:
+              serviceMonitor:
+                enabled: false
+            resources:
+              requests:
+                cpu: 50m
+                memory: 64Mi
+              limits:
+                cpu: 250m
+                memory: 256Mi
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{ printf "pr-%v-%v" .number .repository | trunc 63 | trimSuffix "-" }}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+        managedNamespaceMetadata:
+          labels:
+            idp.io/preview: 'true'
+            idp.io/preview-of: '{{ .repository }}'

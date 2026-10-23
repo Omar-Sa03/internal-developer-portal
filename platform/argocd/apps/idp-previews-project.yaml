@@ -1,0 +1,23 @@
+# Boundary for ephemeral PR environments: only org repos, only pr-* namespaces.
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: idp-previews
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: '-2'
+spec:
+  description: Ephemeral pull request environments
+  sourceRepos:
+    - https://github.com/internal-developer-portal26/*
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: 'pr-*'
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+  namespaceResourceBlacklist:
+    - group: ''
+      kind: ResourceQuota
+    - group: ''
+      kind: LimitRange

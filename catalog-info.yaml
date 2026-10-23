@@ -2,12 +2,11 @@ apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
   name: internal-developer-portal
-  description: An example of a Backstage application.
-  # Example for optional annotations
-  # annotations:
-  #   github.com/project-slug: backstage/backstage
-  #   backstage.io/techdocs-ref: dir:.
+  title: Internal Developer Portal
+  description: Backstage portal with golden paths, GitOps and production readiness scorecards
+  annotations:
+    github.com/project-slug: Omar-Sa03/internal-developer-portal
 spec:
   type: website
-  owner: john@example.com
+  owner: group:default/platform-team
   lifecycle: experimental

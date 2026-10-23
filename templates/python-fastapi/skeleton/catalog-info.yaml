@@ -8,6 +8,7 @@ metadata:
     backstage.io/kubernetes-id: ${{ values.service_name }}
     backstage.io/kubernetes-namespace: ${{ values.service_name }}
     grafana/dashboard-selector: "tag:${{ values.service_name }}"
+    backstage.io/techdocs-ref: dir:.
 spec:
   type: service
   lifecycle: development

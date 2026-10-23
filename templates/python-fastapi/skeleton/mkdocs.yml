@@ -1,0 +1,9 @@
+site_name: ${{ values.service_name }}
+site_description: Documentation for ${{ values.service_name }}
+
+nav:
+  - Overview: index.md
+  - Runbook: runbook.md
+
+plugins:
+  - techdocs-core

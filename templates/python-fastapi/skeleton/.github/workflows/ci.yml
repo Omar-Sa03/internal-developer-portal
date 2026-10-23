@@ -9,11 +9,15 @@ on:
   pull_request:
     branches:
       - main
+    # "labeled" so adding the preview label builds the preview image right away
+    types: [opened, synchronize, reopened, labeled]
 
 permissions:
   contents: write
   packages: write
   pull-requests: write
+  # Upload Trivy results to code scanning (read by the portal's readiness score)
+  security-events: write
 
 jobs:
 
@@ -69,7 +73,87 @@ jobs:
           scan-ref: .
           severity: CRITICAL,HIGH
           ignore-unfixed: true
+          format: sarif
+          output: trivy-results.sarif
           exit-code: "0"
+
+      - name: Upload results to code scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        with:
+          sarif_file: trivy-results.sarif
+          category: trivy-fs
+
+
+  preview-image:
+    name: Build preview image
+    needs:
+      - test
+      - lint
+
+    # Previews are opt-in via the "preview" label, and never built for forks.
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      contains(github.event.pull_request.labels.*.name, 'preview')
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v4
+        with:
+          # Argo CD deploys the PR head commit, so build exactly that commit.
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set lower case owner name
+        run: |
+          echo "OWNER_LC=${OWNER,,}" >> "${GITHUB_ENV}"
+        env:
+          OWNER: ${{ github.repository_owner }}
+
+      - name: Build and push preview image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ env.OWNER_LC }}/${{ github.event.repository.name }}:pr-${{ github.event.pull_request.head.sha }}
+
+      - name: Comment preview URL
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PREVIEW_URL: http://${{ github.event.repository.name }}-pr-${{ github.event.pull_request.number }}.localtest.me:8080
+        run: |
+          marker='<!-- idp-preview -->'
+          body="${marker}
+          ### Preview environment
+
+          | | |
+          |---|---|
+          | URL | ${PREVIEW_URL} |
+          | Commit | \`${HEAD_SHA:0:7}\` |
+          | Namespace | \`pr-${PR_NUMBER}-${GITHUB_REPOSITORY#*/}\` |
+
+          Argo CD deploys this commit within a couple of minutes. The environment is
+          deleted when the PR is closed or the \`preview\` label is removed."
+
+          existing=$(gh api "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" --jq ".[] | select(.body | startswith(\"${marker}\")) | .id" | head -n1)
+          if [ -n "${existing}" ]; then
+            gh api -X PATCH "repos/${GITHUB_REPOSITORY}/issues/comments/${existing}" -f body="${body}"
+          else
+            gh pr comment "${PR_NUMBER}" --repo "${GITHUB_REPOSITORY}" --body "${body}"
+          fi
 
 
   build-and-publish:

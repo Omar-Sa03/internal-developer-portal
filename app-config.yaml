@@ -130,6 +130,7 @@ backend:
       - auth
       - catalog
       - scaffolder
+      - readiness
   # workingDirectory: /tmp # Use this to configure a working directory for the scaffolder, defaults to the OS temp-dir
 
 integrations:
@@ -217,6 +218,12 @@ catalog:
     - allow: [Component, System, API, Resource, Location, Template]
   locations:
     # Local example data, file locations are relative to the backend process, typically `packages/backend`
+    # The portal registers (and scores) itself
+    - type: file
+      target: ../../catalog-info.yaml
+      rules:
+        - allow: [Component]
+
     - type: file
       target: ../../templates/python-fastapi/template.yaml
       rules:
@@ -246,6 +253,15 @@ catalog:
 
 kubernetes:
   # see https://backstage.io/docs/features/kubernetes/configuration for kubernetes configuration options
+
+# Production readiness scorecards (plugins/readiness-backend). Reads Kyverno
+# PolicyReports and Argo CD Applications via the backend's kubeconfig, and CI
+# and code scanning results via the GitHub integration.
+readiness:
+  schedule:
+    frequency: { minutes: 30 }
+    timeout: { minutes: 10 }
+    initialDelay: { seconds: 30 }
 
 # Used by the argoCd:createApplication scaffolder action. Cluster credentials
 # come from the backend's kubeconfig (or in-cluster service account).

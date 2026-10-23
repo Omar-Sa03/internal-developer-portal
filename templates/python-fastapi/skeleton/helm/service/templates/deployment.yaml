@@ -1,56 +1,44 @@
+{% raw %}
 apiVersion: apps/v1
-
 kind: Deployment
-
 metadata:
-  name: ${{ "${{" }} .Release.Name ${{ "}}" }}
-
+  name: {{ .Release.Name }}
   labels:
-    app: ${{ "${{" }} .Release.Name ${{ "}}" }}
-
+    {{- include "service.labels" . | nindent 4 }}
 spec:
-  replicas: ${{ "${{" }} .Values.replicaCount ${{ "}}" }}
-
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: ${{ "${{" }} .Release.Name ${{ "}}" }}
-
+      {{- include "service.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        app: ${{ "${{" }} .Release.Name ${{ "}}" }}
-
+        {{- include "service.labels" . | nindent 8 }}
     spec:
+      securityContext:
+        runAsNonRoot: true
       containers:
-
-        - name: ${{ "${{" }} .Release.Name ${{ "}}" }}
-
-          image: "${{ "${{" }} .Values.image.repository ${{ "}}" }}:${{ "${{" }} .Values.image.tag ${{ "}}" }}"
-
-          imagePullPolicy: ${{ "${{" }} .Values.image.pullPolicy ${{ "}}" }}
-
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
-            - containerPort: 8000
-
+            - name: http
+              containerPort: 8000
           resources:
-            ${{ "${{-" }} toYaml .Values.resources | nindent 12 ${{ "}}" }}
-
+            {{- toYaml .Values.resources | nindent 12 }}
           securityContext:
             allowPrivilegeEscalation: false
             runAsNonRoot: true
-
           readinessProbe:
             httpGet:
               path: /health
-              port: 8000
-
+              port: http
             initialDelaySeconds: 5
             periodSeconds: 10
-
           livenessProbe:
             httpGet:
               path: /health
-              port: 8000
-
+              port: http
             initialDelaySeconds: 10
             periodSeconds: 15
+{% endraw %}

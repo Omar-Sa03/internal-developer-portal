@@ -75,4 +75,6 @@ backend.add(import('@backstage/plugin-mcp-actions-backend'));
 backend.add(
   import('@internal/backstage-plugin-scaffolder-backend-module-argocd'),
 );
+backend.add(import('@internal/backstage-plugin-readiness-backend'));
+backend.add(import('@internal/backstage-plugin-previews-backend'));
 backend.start();

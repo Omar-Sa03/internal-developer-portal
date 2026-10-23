@@ -42,4 +42,4 @@ spec:
         pattern:
           spec:
             containers:
-              - image: 'ghcr.io/omar-sa03/*'
+              - image: 'ghcr.io/internal-developer-portal26/* | ghcr.io/omar-sa03/*'
