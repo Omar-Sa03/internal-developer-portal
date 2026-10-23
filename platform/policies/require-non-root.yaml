@@ -21,6 +21,17 @@ spec:
           - resources:
               kinds:
                 - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kube-public
+                - local-path-storage
+                - argocd
+                - kyverno
+                - monitoring
+                - ingress-nginx
 
       validate:
         failureAction: Audit
@@ -29,7 +40,6 @@ spec:
           Containers must run as a non-root user.
 
         anyPattern:
-
           - spec:
               securityContext:
                 runAsNonRoot: true

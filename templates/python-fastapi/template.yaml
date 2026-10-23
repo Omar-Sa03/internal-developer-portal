@@ -72,6 +72,15 @@ spec:
         defaultBranch: main
         repoVisibility: public
 
+    - id: deploy
+      name: Create Argo CD application
+      action: argoCd:createApplication
+      input:
+        name: ${{ parameters.serviceName }}
+        repoUrl: ${{ steps.publish.output.remoteUrl }}
+        path: helm/service
+        namespace: ${{ parameters.serviceName }}
+
     - id: register
       name: Register service
       action: catalog:register
@@ -84,6 +93,9 @@ spec:
     links:
       - title: Repository
         url: ${{ steps.publish.output.remoteUrl }}
+
+      - title: Argo CD application
+        url: http://argocd.localtest.me:8080/applications/argocd/${{ steps.deploy.output.applicationName }}
 
       - title: Open in Catalog
         icon: catalog

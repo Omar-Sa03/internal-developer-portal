@@ -14,7 +14,6 @@ spec:
   background: true
 
   rules:
-
     - name: require-readiness-probe
 
       match:
@@ -22,6 +21,17 @@ spec:
           - resources:
               kinds:
                 - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kube-public
+                - local-path-storage
+                - argocd
+                - kyverno
+                - monitoring
+                - ingress-nginx
 
       validate:
         failureAction: Audit
@@ -34,7 +44,6 @@ spec:
             containers:
               - readinessProbe: {}
 
-
     - name: require-liveness-probe
 
       match:
@@ -42,6 +51,17 @@ spec:
           - resources:
               kinds:
                 - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kube-public
+                - local-path-storage
+                - argocd
+                - kyverno
+                - monitoring
+                - ingress-nginx
 
       validate:
         failureAction: Audit

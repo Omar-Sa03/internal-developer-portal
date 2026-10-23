@@ -21,6 +21,17 @@ spec:
           - resources:
               kinds:
                 - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kube-public
+                - local-path-storage
+                - argocd
+                - kyverno
+                - monitoring
+                - ingress-nginx
 
       validate:
         failureAction: Audit
@@ -34,8 +45,8 @@ spec:
             containers:
               - resources:
                   requests:
-                    cpu: "?*"
-                    memory: "?*"
+                    cpu: '?*'
+                    memory: '?*'
                   limits:
-                    cpu: "?*"
-                    memory: "?*"
+                    cpu: '?*'
+                    memory: '?*'

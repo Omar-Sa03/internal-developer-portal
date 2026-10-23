@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: monitoring
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: kube-prometheus-stack
+    targetRevision: 65.5.0
+    helm:
+      valuesObject:
+        prometheus:
+          prometheusSpec:
+            # Pick up the ServiceMonitor shipped by every scaffolded service.
+            serviceMonitorSelectorNilUsesHelmValues: false
+        grafana:
+          ingress:
+            enabled: true
+            ingressClassName: nginx
+            hosts:
+              - grafana.localtest.me
+        alertmanager:
+          enabled: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

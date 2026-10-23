@@ -1,4 +1,3 @@
-/***/
 /**
  * The argocd backend module for the scaffolder plugin.
  *

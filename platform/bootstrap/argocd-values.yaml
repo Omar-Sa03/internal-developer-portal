@@ -1,0 +1,14 @@
+configs:
+  params:
+    # TLS is terminated (or skipped) at the ingress for local development.
+    server.insecure: true
+
+server:
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hostname: argocd.localtest.me
+
+# Lets ApplicationSets react to pull requests (preview environments).
+applicationSet:
+  enabled: true

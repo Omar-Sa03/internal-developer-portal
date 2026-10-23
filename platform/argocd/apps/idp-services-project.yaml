@@ -1,0 +1,41 @@
+# Boundary for every service created from the portal. The scaffolder action
+# always uses this project, so even a malicious template input cannot deploy
+# from foreign repos, into platform namespaces, or create cluster-wide RBAC.
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: idp-services
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: '-2'
+spec:
+  description: Services scaffolded by the Internal Developer Portal
+  sourceRepos:
+    - https://github.com/internal-developer-portal26/*
+  destinations:
+    # Negated entries are evaluated first and deny the match.
+    - server: https://kubernetes.default.svc
+      namespace: '!kube-*'
+    - server: https://kubernetes.default.svc
+      namespace: '!default'
+    - server: https://kubernetes.default.svc
+      namespace: '!argocd'
+    - server: https://kubernetes.default.svc
+      namespace: '!kyverno'
+    - server: https://kubernetes.default.svc
+      namespace: '!monitoring'
+    - server: https://kubernetes.default.svc
+      namespace: '!ingress-nginx'
+    - server: https://kubernetes.default.svc
+      namespace: '!local-path-storage'
+    - server: https://kubernetes.default.svc
+      namespace: '*'
+  # Only namespaces may be created at cluster scope (CreateNamespace=true).
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+  namespaceResourceBlacklist:
+    - group: ''
+      kind: ResourceQuota
+    - group: ''
+      kind: LimitRange

@@ -1,0 +1,19 @@
+# App-of-apps: every cluster add-on is declared under platform/argocd/apps.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: platform
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Omar-Sa03/internal-developer-portal.git
+    targetRevision: main
+    path: platform/argocd/apps
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

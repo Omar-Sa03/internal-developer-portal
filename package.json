@@ -36,21 +36,24 @@
     "plugins/*"
   ],
   "devDependencies": {
-    "@backstage/cli": "^0.36.5",
-    "@backstage/cli-defaults": "^0.1.5",
+    "@backstage/cli": "^0.36.7",
+    "@backstage/cli-defaults": "^0.1.7",
     "@backstage/e2e-test-utils": "^0.1.2",
     "@jest/environment-jsdom-abstract": "~30.2.0",
     "@playwright/test": "^1.32.3",
     "@types/jest": "^30.0.0",
     "jest": "~30.2.0",
     "jsdom": "^27.1.0",
-    "node-gyp": "^10.0.0",
+    "node-gyp": "^13.1.0",
     "prettier": "^2.3.2",
     "typescript": "~5.8.0"
   },
   "resolutions": {
     "@types/react": "^18",
-    "@types/react-dom": "^18"
+    "@types/react-dom": "^18",
+    "adm-zip@npm:0.6.0": "0.6.1",
+    "undici@npm:7.29.0": "7.30.1",
+    "js-yaml@npm:=4.3.1": "4.3.2"
   },
   "prettier": "@backstage/cli/config/prettier",
   "lint-staged": {

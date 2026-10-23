@@ -169,9 +169,20 @@ techdocs:
 
 auth:
   # see https://backstage.io/docs/auth/ to learn about auth providers
+  environment: development
   providers:
     # See https://backstage.io/docs/auth/guest/provider
+    # Guests get read-only access (see permission.idp below).
     guest: {}
+    # See https://backstage.io/docs/auth/github/provider
+    github:
+      development:
+        clientId: ${AUTH_GITHUB_CLIENT_ID}
+        clientSecret: ${AUTH_GITHUB_CLIENT_SECRET}
+        signIn:
+          resolvers:
+            # Matches the GitHub login to a User synced by catalog.providers.githubOrg
+            - resolver: usernameMatchingUserEntityName
   # see https://backstage.io/docs/ai/mcp-actions#client-id-metadata-documents
   # to learn more about client id metadata documents
   clientIdMetadataDocuments:
@@ -189,6 +200,16 @@ scaffolder:
   # see https://backstage.io/docs/features/software-templates/configuration for software template options
 
 catalog:
+  providers:
+    # Syncs GitHub org members as Users and teams as Groups, so `spec.owner`
+    # and permission decisions use real team membership.
+    githubOrg:
+      id: github
+      githubUrl: https://github.com
+      orgs: [internal-developer-portal26]
+      schedule:
+        frequency: { minutes: 30 }
+        timeout: { minutes: 5 }
   import:
     entityFilename: catalog-info.yaml
     pullRequestBranchName: backstage-integration
@@ -226,10 +247,27 @@ catalog:
 kubernetes:
   # see https://backstage.io/docs/features/kubernetes/configuration for kubernetes configuration options
 
+# Used by the argoCd:createApplication scaffolder action. Cluster credentials
+# come from the backend's kubeconfig (or in-cluster service account).
+argocd:
+  namespace: argocd
+  destinationServer: https://kubernetes.default.svc
+  # AppProject from platform/argocd/apps/idp-services-project.yaml
+  project: idp-services
+
 # see https://backstage.io/docs/permissions/getting-started for more on the permission framework
 permission:
   # setting this to `false` will disable permissions
   enabled: true
+  # Settings for the custom policy in packages/backend/src/permissions
+  idp:
+    # Users or groups with full access
+    adminRefs:
+      - group:default/platform-team
+    # Identities limited to read access
+    readOnlyRefs:
+      - user:development/guest
+      - user:default/guest
 
 # see https://backstage.io/docs/ai/mcp-actions for more details
 mcpActions:
