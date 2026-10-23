@@ -23,6 +23,12 @@ spec:
               - grafana.localtest.me
         alertmanager:
           enabled: true
+          # Lets the portal's on-call MCP actions read firing alerts.
+          ingress:
+            enabled: true
+            ingressClassName: nginx
+            hosts:
+              - alertmanager.localtest.me
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring

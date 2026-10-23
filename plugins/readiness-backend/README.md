@@ -14,6 +14,11 @@ stores the history, and exposes it over REST and as an MCP action.
 | Deployed and healthy via Argo CD | Argo CD `Application` labelled `backstage.io/kubernetes-id`      | 3      |
 | Default branch CI is green       | Latest completed GitHub Actions run on the default branch        | 2      |
 | No critical vulnerabilities      | Open GitHub code scanning alerts (Trivy SARIF from the template) | 3      |
+| On the latest golden path        | `idp.io/template-version` vs. the template's current version     | 2      |
+
+The golden path check fails when a service is a major version behind its template and warns on
+minor or patch drift. It links to the template's upgrade template (`idp.io/upgrade-template`),
+which opens a pull request with the latest platform-owned files.
 
 Each check returns `pass`, `warn` (half credit), `fail`, `skip` (not applicable) or `error`
 (could not be evaluated). `skip` and `error` are left out of the score so an unavailable

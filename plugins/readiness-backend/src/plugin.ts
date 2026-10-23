@@ -12,6 +12,7 @@ import {
   techDocsCheck,
 } from './checks/catalogChecks';
 import { ciStatusCheck, vulnerabilityCheck } from './checks/githubChecks';
+import { goldenPathCheck } from './checks/goldenPathCheck';
 import {
   gitOpsDeploymentCheck,
   policyComplianceCheck,
@@ -64,6 +65,7 @@ export const readinessPlugin = createBackendPlugin({
             gitOpsDeploymentCheck(k8s),
             ciStatusCheck(github),
             vulnerabilityCheck(github),
+            goldenPathCheck(catalog, () => auth.getOwnServiceCredentials()),
           ],
           logger,
         );

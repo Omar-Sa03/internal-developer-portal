@@ -5,6 +5,13 @@ metadata:
   name: python-fastapi-service
   title: Python FastAPI Service
   description: Create a production-ready FastAPI service
+  annotations:
+    # Single source of truth for the golden path version (see CHANGELOG.md).
+    # Bump it whenever the skeleton changes; generated services record the
+    # version they were built from, and the readiness score flags drift.
+    idp.io/template-version: &templateVersion 2.0.0
+    # Template that opens upgrade pull requests for services built from this one.
+    idp.io/upgrade-template: template:default/upgrade-python-fastapi-service
 
 spec:
   owner: group:backend-team
@@ -62,6 +69,7 @@ spec:
           team: ${{ parameters.team }}
           environment: ${{ parameters.environment }}
           github_owner: ${{ parameters.githubOwner }}
+          template_version: *templateVersion
 
     - id: publish
       name: Create GitHub repository

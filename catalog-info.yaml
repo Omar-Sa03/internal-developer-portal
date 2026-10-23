@@ -6,6 +6,7 @@ metadata:
   description: Backstage portal with golden paths, GitOps and production readiness scorecards
   annotations:
     github.com/project-slug: Omar-Sa03/internal-developer-portal
+    backstage.io/techdocs-ref: dir:.
 spec:
   type: website
   owner: group:default/platform-team

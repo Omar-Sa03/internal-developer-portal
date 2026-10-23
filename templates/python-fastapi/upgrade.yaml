@@ -1,0 +1,111 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+
+metadata:
+  name: upgrade-python-fastapi-service
+  title: Upgrade Python FastAPI service
+  description: >-
+    Opens a pull request that brings a service generated from the Python FastAPI
+    golden path up to the latest template version. Only platform-owned files
+    (CI, Helm chart, Dockerfile, docs config, catalog-info) are changed.
+  tags:
+    - golden-path
+    - upgrade
+
+spec:
+  owner: group:default/platform-team
+  type: maintenance
+
+  parameters:
+    - title: Service
+      required:
+        - entityRef
+      properties:
+        entityRef:
+          title: Service to upgrade
+          type: string
+          description: Only services you own that were generated from the golden path are listed
+          ui:field: OwnedEntityPicker
+          ui:options:
+            catalogFilter:
+              kind: Component
+              metadata.annotations.idp.io/template: python-fastapi-service
+
+  steps:
+    - id: service
+      name: Read service
+      action: catalog:fetch
+      input:
+        entityRef: ${{ parameters.entityRef }}
+
+    - id: template
+      name: Read latest template version
+      action: catalog:fetch
+      input:
+        entityRef: template:default/python-fastapi-service
+
+    - id: render
+      name: Render latest skeleton
+      action: fetch:template
+      input:
+        url: ./skeleton
+        targetPath: ./upgrade
+        values:
+          service_name: ${{ steps.service.output.entity.metadata.name }}
+          team: ${{ steps.service.output.entity.spec.owner | parseEntityRef | pick('name') }}
+          environment: ${{ steps.service.output.entity.metadata.annotations['idp.io/environment'] or 'development' }}
+          github_owner: ${{ steps.service.output.entity.metadata.annotations['github.com/project-slug'] | replace('/' + steps.service.output.entity.metadata.name, '') }}
+          template_version: ${{ steps.template.output.entity.metadata.annotations['idp.io/template-version'] }}
+
+    # Ownership boundary: the team owns these, so the upgrade never touches them.
+    - id: keep-app-code
+      name: Leave application code untouched
+      action: fs:delete
+      input:
+        files:
+          - upgrade/src
+          - upgrade/tests
+          - upgrade/docs
+          - upgrade/README.md
+          - upgrade/requirements.txt
+          - upgrade/pyproject.toml
+          - upgrade/pytest.ini
+          - upgrade/.gitignore
+
+    - id: pull-request
+      name: Open upgrade pull request
+      action: publish:github:pull-request
+      input:
+        repoUrl: github.com?owner=${{ steps.service.output.entity.metadata.annotations['github.com/project-slug'] | replace('/' + steps.service.output.entity.metadata.name, '') }}&repo=${{ steps.service.output.entity.metadata.name }}
+        branchName: idp/golden-path-${{ steps.template.output.entity.metadata.annotations['idp.io/template-version'] }}
+        sourcePath: ./upgrade
+        update: true
+        title: >-
+          chore: upgrade golden path from
+          ${{ steps.service.output.entity.metadata.annotations['idp.io/template-version'] }}
+          to ${{ steps.template.output.entity.metadata.annotations['idp.io/template-version'] }}
+        commitMessage: >-
+          chore: upgrade golden path to
+          ${{ steps.template.output.entity.metadata.annotations['idp.io/template-version'] }}
+        description: |
+          Automated upgrade of the platform-owned files of this service to version
+          **${{ steps.template.output.entity.metadata.annotations['idp.io/template-version'] }}**
+          of the Python FastAPI golden path
+          (from ${{ steps.service.output.entity.metadata.annotations['idp.io/template-version'] }}).
+
+          What changed: [golden path changelog](https://github.com/Omar-Sa03/internal-developer-portal/blob/main/templates/python-fastapi/CHANGELOG.md)
+
+          Only `.github/workflows/`, `helm/`, `Dockerfile`, `mkdocs.yml` and
+          `catalog-info.yaml` are touched; application code is left as is. Review local
+          changes to those files before merging. Once merged, the readiness score stops
+          reporting template drift.
+
+          Requested by ${{ user.entity.metadata.name }} through the Internal Developer Portal.
+
+  output:
+    links:
+      - title: Upgrade pull request
+        url: ${{ steps['pull-request'].output.remoteUrl }}
+      - title: Open in catalog
+        icon: catalog
+        entityRef: ${{ parameters.entityRef }}

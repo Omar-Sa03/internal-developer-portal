@@ -77,4 +77,5 @@ backend.add(
 );
 backend.add(import('@internal/backstage-plugin-readiness-backend'));
 backend.add(import('@internal/backstage-plugin-previews-backend'));
+backend.add(import('@internal/backstage-plugin-oncall-backend'));
 backend.start();

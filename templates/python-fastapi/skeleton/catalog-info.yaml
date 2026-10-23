@@ -9,6 +9,10 @@ metadata:
     backstage.io/kubernetes-namespace: ${{ values.service_name }}
     grafana/dashboard-selector: "tag:${{ values.service_name }}"
     backstage.io/techdocs-ref: dir:.
+    # Golden path provenance, used for drift detection and upgrade pull requests.
+    idp.io/template: python-fastapi-service
+    idp.io/template-version: "${{ values.template_version }}"
+    idp.io/environment: ${{ values.environment }}
 spec:
   type: service
   lifecycle: development

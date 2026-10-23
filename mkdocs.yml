@@ -1,0 +1,14 @@
+site_name: Internal Developer Portal
+site_description: Architecture and design decisions of the portal
+
+nav:
+  - Overview: index.md
+  - Design decisions:
+      - Custom readiness plugin: adr/0001-custom-readiness-plugin.md
+      - Previews with an ApplicationSet: adr/0002-previews-with-applicationset.md
+      - Label-driven preview expiry: adr/0003-label-driven-preview-expiry.md
+      - Golden path ownership boundary: adr/0004-golden-path-ownership-boundary.md
+      - MCP actions with caller permissions: adr/0005-mcp-actions-with-caller-permissions.md
+
+plugins:
+  - techdocs-core

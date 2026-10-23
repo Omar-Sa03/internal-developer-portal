@@ -131,6 +131,7 @@ backend:
       - catalog
       - scaffolder
       - readiness
+      - oncall
   # workingDirectory: /tmp # Use this to configure a working directory for the scaffolder, defaults to the OS temp-dir
 
 integrations:
@@ -229,6 +230,11 @@ catalog:
       rules:
         - allow: [Template]
 
+    - type: file
+      target: ../../templates/python-fastapi/upgrade.yaml
+      rules:
+        - allow: [Template]
+
     # Local example template
     - type: file
       target: ../../examples/template/template.yaml
@@ -262,6 +268,13 @@ readiness:
     frequency: { minutes: 30 }
     timeout: { minutes: 10 }
     initialDelay: { seconds: 30 }
+
+# MCP actions for incident investigation (plugins/oncall-backend).
+# MCP endpoint: http://localhost:7007/api/mcp-actions/v1
+oncall:
+  alertmanager:
+    # Exposed by the monitoring app's ingress (platform/argocd/apps/monitoring.yaml)
+    baseUrl: http://alertmanager.localtest.me:8080
 
 # Used by the argoCd:createApplication scaffolder action. Cluster credentials
 # come from the backend's kubeconfig (or in-cluster service account).
